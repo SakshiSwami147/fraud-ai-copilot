@@ -4,6 +4,7 @@ from app.database import get_db
 from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
 from passlib.context import CryptContext
+from app.core.security import create_access_token
 
 router = APIRouter()
 
@@ -28,3 +29,20 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     db.refresh(new_user)
     
     return new_user
+
+@router.post("/login")
+def login(user: UserCreate, db: Session = Depends(get_db)):
+    
+    existing_user = db.query(User).filter(User.email == user.email).first()
+    if not existing_user:
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    if not pwd_context.verify(user.password, existing_user.password):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+    
+    token = create_access_token(data={"sub": existing_user.email})
+    
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
