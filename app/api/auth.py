@@ -5,6 +5,8 @@ from app.models.user import User
 from app.schemas.user import UserCreate, UserResponse
 from passlib.context import CryptContext
 from app.core.security import create_access_token
+from app.core.security import create_access_token, get_current_user
+from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter()
 
@@ -46,3 +48,7 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
         "access_token": token,
         "token_type": "bearer"
     }
+
+@router.get("/me")
+def get_me(current_user: str = Depends(get_current_user)):
+    return {"email": current_user, "message": "You are logged in"}
